@@ -3,8 +3,6 @@ import _ from "lodash";
 import { argv } from "yargs";
 import logger from "testarmada-logger";
 import settings from "./settings";
-
-
 logger.prefix = "SeleniumGrid Executor";
 
 export default {

@@ -18,6 +18,7 @@ export default {
       runArgv = argvMock;
     }
 
+    /* istanbul ignore if */
     if (envMock) {
       env = envMock;
     }
