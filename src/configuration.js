@@ -1,5 +1,4 @@
 import { argv } from "yargs";
-import _ from "lodash";
 import logger from "testarmada-logger";
 import settings from "./settings";
 
@@ -36,7 +35,7 @@ export default {
     }
 
     // verifications
-    if (setting.config.seleniumgridURL) {
+    if (settings.config.seleniumgridURL) {
       if (settings.config.seleniumgridHost) {
         logger.err("--seleniumgrid_url cannot be used with --seleniumgrid_host");
         throw new Error("Please use --seleniumgrid_url, "

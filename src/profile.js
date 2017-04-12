@@ -2,14 +2,25 @@ import path from "path";
 import _ from "lodash";
 import { argv } from "yargs";
 import logger from "testarmada-logger";
+import settings from "./settings";
+
 
 logger.prefix = "SeleniumGrid Executor";
 
 export default {
+  /* eslint-disable camelcase */
   getNightwatchConfig: (profile) => {
     const config = {
       desiredCapabilities: profile.desiredCapabilities
     };
+
+    if (settings.config.seleniumgridHost) {
+      config.selenium_host = settings.config.seleniumgridHost;
+    }
+
+    if (settings.config.seleniumgridPort) {
+      config.selenium_port = settings.config.seleniumgridPort;
+    }
 
     logger.debug(`executor config: ${JSON.stringify(config)}`);
     return config;
@@ -29,28 +40,28 @@ export default {
     const browsers = nightwatchConfig.test_settings;
 
     return new Promise((resolve) => {
-      if (runArgv.local_browser) {
-        const localBrowser = runArgv.local_browser;
+      if (runArgv.seleniumgrid_browser) {
+        const localBrowser = runArgv.seleniumgrid_browser;
         if (browsers[localBrowser]) {
           const b = browsers[localBrowser];
 
-          b.executor = "local";
+          b.executor = "seleniumgrid";
           b.nightwatchEnv = localBrowser;
           b.id = localBrowser;
 
-          logger.debug(`detected profile: ${ JSON.stringify(b)}`);
+          logger.debug(`detected profile: ${JSON.stringify(b)}`);
 
           resolve([b]);
         }
-      } else if (runArgv.local_browsers) {
-        const tempBrowsers = runArgv.local_browsers.split(",");
+      } else if (runArgv.seleniumgrid_browsers) {
+        const tempBrowsers = runArgv.seleniumgrid_browsers.split(",");
         const returnBrowsers = [];
 
         _.forEach(tempBrowsers, (browser) => {
           if (browsers[browser]) {
             const b = browsers[browser];
 
-            b.executor = "local";
+            b.executor = "seleniumgrid";
             b.nightwatchEnv = browser;
             b.id = browser;
 
@@ -58,7 +69,7 @@ export default {
           }
         });
 
-        logger.debug(`detected profiles: ${ JSON.stringify(returnBrowsers)}`);
+        logger.debug(`detected profiles: ${JSON.stringify(returnBrowsers)}`);
 
         resolve(returnBrowsers);
       } else {
@@ -77,13 +88,13 @@ export default {
       if (browsers[profile]) {
         const b = browsers[profile];
 
-        b.executor = "local";
+        b.executor = "seleniumgrid";
         b.nightwatchEnv = profile;
         b.id = profile;
 
         resolve(b);
       } else {
-        reject(`profile: ${ profile } isn't found`);
+        reject(`profile: ${profile} isn't found`);
       }
     });
   },
@@ -100,13 +111,13 @@ export default {
 
     _.forEach(browsers, (capabilities, browser) => {
       if (OMIT_BROWSERS.indexOf(browser) < 0) {
-        logger.debug(`  browser:    ${ browser}`);
-        logger.debug(`  capabilities: ${ JSON.stringify(capabilities)}`);
+        logger.debug(`  browser:    ${browser}`);
+        logger.debug(`  capabilities: ${JSON.stringify(capabilities)}`);
         listedBrowsers.push(browser);
       }
     });
 
-    logger.log(`Available browsers from file ${ configPath }: ${ listedBrowsers.join(",")}`);
+    logger.log(`Available browsers from file ${configPath}: ${listedBrowsers.join(",")}`);
 
     callback();
   }

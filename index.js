@@ -26,5 +26,5 @@ module.exports = {
   execute: executor.execute,
   summerizeTest: executor.summerizeTest,
 
-  getSeleniumPort: port.getSeleniumPort
+  getPorts: port.getPorts
 };
