@@ -38,8 +38,8 @@ export default {
 
       if (runArgv.seleniumgrid_browser) {
         browsers.push(runArgv.seleniumgrid_browser);
-      } else if (runArgv.seleniumgrid_browser) {
-        _.forEach(runArgv.seleniumgrid_browser.split(","), (browser) => {
+      } else if (runArgv.seleniumgrid_browsers) {
+        _.forEach(runArgv.seleniumgrid_browsers.split(","), (browser) => {
           browsers.push(browser);
         });
       }
