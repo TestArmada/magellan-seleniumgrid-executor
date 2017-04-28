@@ -1,6 +1,6 @@
 {
   "name": "testarmada-magellan-seleniumgrid-executor",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "test executor for magellan test to run over selenium grid",
   "main": "index.js",
   "scripts": {

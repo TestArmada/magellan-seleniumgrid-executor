@@ -1,13 +1,13 @@
-import path from "path";
 import _ from "lodash";
 import { argv } from "yargs";
 import logger from "testarmada-logger";
 import settings from "./settings";
-logger.prefix = "SeleniumGrid Executor";
 
 export default {
   /* eslint-disable camelcase */
   getNightwatchConfig: (profile) => {
+    logger.prefix = "SeleniumGrid Executor";
+
     const config = {
       desiredCapabilities: profile.desiredCapabilities
     };
@@ -25,98 +25,88 @@ export default {
   },
 
   getProfiles: (opts, argvMock = null) => {
+    logger.prefix = "SeleniumGrid Executor";
+
     let runArgv = argv;
 
     if (argvMock) {
       runArgv = argvMock;
     }
 
-    const configPath = opts.settings.testFramework.settings.nightwatchConfigFilePath;
-
-    /*eslint-disable global-require*/
-    const nightwatchConfig = require(path.resolve(configPath));
-    const browsers = nightwatchConfig.test_settings;
-
     return new Promise((resolve) => {
+      const browsers = [];
+
       if (runArgv.seleniumgrid_browser) {
-        const localBrowser = runArgv.seleniumgrid_browser;
-        if (browsers[localBrowser]) {
-          const b = browsers[localBrowser];
-
-          b.executor = "seleniumgrid";
-          b.nightwatchEnv = localBrowser;
-          b.id = localBrowser;
-
-          logger.debug(`detected profile: ${JSON.stringify(b)}`);
-
-          resolve([b]);
-        }
+        browsers.push(runArgv.seleniumgrid_browser);
       } else if (runArgv.seleniumgrid_browsers) {
-        const tempBrowsers = runArgv.seleniumgrid_browsers.split(",");
-        const returnBrowsers = [];
+        _.forEach(runArgv.seleniumgrid_browsers.split(","), (browser) => {
+          browsers.push(browser);
+        });
+      }
 
-        _.forEach(tempBrowsers, (browser) => {
-          if (browsers[browser]) {
-            const b = browsers[browser];
+      if (opts.settings.testFramework.profile
+        && opts.settings.testFramework.profile.getProfiles) {
+        // if framework plugin knows how to solve profiles
+        const profiles = opts.settings.testFramework.profile.getProfiles(browsers);
 
-            b.executor = "seleniumgrid";
-            b.nightwatchEnv = browser;
-            b.id = browser;
-
-            returnBrowsers.push(b);
-          }
+        _.forEach(profiles, (profile) => {
+          profile.executor = "seleniumgrid";
         });
 
-        logger.debug(`detected profiles: ${JSON.stringify(returnBrowsers)}`);
-
-        resolve(returnBrowsers);
+        logger.debug(`detected profile: ${JSON.stringify(profiles)}`);
+        resolve(profiles);
       } else {
-        resolve();
+        // framework doesn't understand how to solve profiles
+        logger.warn("no profile is detected, use the default one");
+        resolve([{ executor: "seleniumgrid", id: "mocha" }]);
       }
     });
+
   },
 
   /*eslint-disable global-require*/
   getCapabilities: (profile, opts) => {
-    const configPath = opts.settings.testFramework.settings.nightwatchConfigFilePath;
-    const nightwatchConfig = require(path.resolve(configPath));
-    const browsers = nightwatchConfig.test_settings;
+    logger.prefix = "SeleniumGrid Executor";
 
     return new Promise((resolve, reject) => {
-      if (browsers[profile]) {
-        const b = browsers[profile];
+      if (opts.settings.testFramework.profile
+        && opts.settings.testFramework.profile.getCapabilities) {
+        // if framework plugin knows how to solve capabilities
 
-        b.executor = "seleniumgrid";
-        b.nightwatchEnv = profile;
-        b.id = profile;
 
-        resolve(b);
+        try {
+          const p = opts.settings.testFramework.profile.getCapabilities(profile);
+          p.executor = "seleniumgrid";
+
+          resolve(p);
+        } catch (e) {
+          logger.err(`profile: ${profile} isn't found`);
+          reject(e);
+        }
+
       } else {
-        reject(`profile: ${profile} isn't found`);
+        // framework doesn't understand how to solve capabilities
+        logger.warn("no capabilities is detected, use the default one");
+        resolve({ executor: "seleniumgrid", id: "mocha" });
       }
     });
   },
 
   /*eslint-disable global-require*/
   listBrowsers: (opts, callback) => {
-    const configPath = opts.settings.testFramework.settings.nightwatchConfigFilePath;
-    const nightwatchConfig = require(path.resolve(configPath));
-    const browsers = nightwatchConfig.test_settings;
+    logger.prefix = "SeleniumGrid Executor";
 
-    const OMIT_BROWSERS = ["default", "sauce"];
-    const listedBrowsers = [];
+    if (opts.settings.testFramework.profile
+      && opts.settings.testFramework.profile.listBrowsers) {
+      // if framework plugin knows how to list browsers
 
+      const listedBrowsers = opts.settings.testFramework.profile.listBrowsers();
+      logger.log(`Available browsers: ${listedBrowsers.join(",")}`);
 
-    _.forEach(browsers, (capabilities, browser) => {
-      if (OMIT_BROWSERS.indexOf(browser) < 0) {
-        logger.debug(`  browser:    ${browser}`);
-        logger.debug(`  capabilities: ${JSON.stringify(capabilities)}`);
-        listedBrowsers.push(browser);
-      }
-    });
-
-    logger.log(`Available browsers from file ${configPath}: ${listedBrowsers.join(",")}`);
-
-    callback();
+      return callback();
+    } else {
+      // if framework plugin doesn't know how to list browsers
+      return callback();
+    }
   }
 };
