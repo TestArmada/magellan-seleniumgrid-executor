@@ -47,3 +47,6 @@ To run test on seleniumgrid with chrome
 ```console
 $ ./node_modules/.bin/magellan --seleniumgrid_browser chrome --seleniumgrid_host ${GRID_HOST} --seleniumgrid_port ${GRID_PORT} --test xxx 
 ```
+
+## License
+Documentation in this project is licensed under Creative Commons Attribution 4.0 International License. Full details available at https://creativecommons.org/licenses/by/4.0
